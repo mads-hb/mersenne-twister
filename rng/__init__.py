@@ -1,3 +1,7 @@
+import time
+from math import ceil
+from typing import Optional
+
 
 class MersenneTwister:
 	
@@ -9,7 +13,17 @@ class MersenneTwister:
 	l = 18
 	f = 1812433253
 
-	def __init__(self, seed: int):
+	def __init__(self, seed: Optional[int] = None):
+		"""Init a Mersenne-Twister type random number generator.
+
+		Parameters
+		----------
+
+		seed: Optional[int], default=None
+			The seed of the RNG. If None then use unix-timestamp to seed generator.
+		"""
+		if seed is None:
+			seed = ceil(time.time())
 		self._seed = seed
 		arr = [0 for i in range(self.n)]
 		arr[0] = seed
@@ -21,8 +35,15 @@ class MersenneTwister:
 		self._lower_mask = (1 << self.r) - 1
 		self._upper_mask = ~self._lower_mask & 0xFFFFFFFF
 		
-	def get(self) -> float:
-		"""Generate a random float in range [0,1]."""
+	def random(self) -> float:
+		"""Generate a random float in range [0,1].
+		
+		Return
+		------
+
+		r: int
+			A random float in range [0, 1].
+		"""
 		if self._index >= self.n:
 			if self._index > self.n:
 				raise ValueError("Generator was never seeded")
@@ -34,7 +55,31 @@ class MersenneTwister:
 		y = y ^ (y >> 1)
 
 		self._index += 1
+		# Normalize to range [0, 1] since default is integer in range [0, 2^w - 1].
 		return (y & 0xFFFFFFFF) / (2 ** self.w - 1)
+
+	def randint(self, *, low: int, high: int) -> int:
+		"""Generate a random integer in range [low, high] (both endpoints included).
+
+		Parameters
+		----------
+
+		low: int
+			The lower point in range (inclusive).
+		high: int
+			The upper point in range (inclusive).
+
+
+		Return
+		------
+
+		r: int
+			A random integer in range [low, high].
+		"""
+		if low >= high:
+			raise ValueError(f"Low should be strictly lower than high. Got {low=} and {high=}")
+		r = ceil(self.random() * (high - low+1)) + low -1
+		return r
 	
 	def _twist(self):
 		for i in range(self.n):
@@ -46,8 +91,3 @@ class MersenneTwister:
 			self._arr[i] = self._arr[(i+self.m)% self.n] ^ xA
 		self._index = 0
 	
-
-if __name__ == '__main__':
-	rng = MersenneTwister(1)
-	for _ in range(10):
-		print(rng.get())
