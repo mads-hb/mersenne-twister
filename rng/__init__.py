@@ -21,7 +21,8 @@ class MersenneTwister:
 		self._lower_mask = (1 << self.r) - 1
 		self._upper_mask = ~self._lower_mask & 0xFFFFFFFF
 		
-	def get(self):
+	def get(self) -> float:
+		"""Generate a random float in range [0,1]."""
 		if self._index >= self.n:
 			if self._index > self.n:
 				raise ValueError("Generator was never seeded")
